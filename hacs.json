@@ -1,0 +1,6 @@
+{
+  "name": "Casa Futura Kiosk",
+  "filename": "casa-futura-kiosk.js",
+  "render_readme": true,
+  "homeassistant": "2024.8.0"
+}

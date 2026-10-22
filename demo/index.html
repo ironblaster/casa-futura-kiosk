@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Casa Futura Kiosk – demo</title>
+<style>
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: system-ui, sans-serif; color: #eef4ff; padding: 28px; box-sizing: border-box; min-height: 100vh;
+    background:
+      radial-gradient(900px 620px at 0% 0%, rgba(0,170,255,.26), transparent 60%),
+      radial-gradient(820px 600px at 100% 6%, rgba(150,70,255,.26), transparent 60%),
+      radial-gradient(900px 700px at 60% 110%, rgba(0,255,170,.14), transparent 60%), #000;
+  }
+  .note { opacity: .6; font-size: 14px; margin: 0 0 16px; }
+</style>
+</head>
+<body>
+<p class="note" id="note"></p>
+<hui-view id="view"></hui-view>
+<script>
+/* demo-only stand-ins for Home Assistant elements */
+const MDI = 'https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css';
+document.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="' + MDI + '">');
+customElements.define('ha-icon', class extends HTMLElement {
+  static get observedAttributes() { return ['icon']; }
+  constructor() { super(); this.attachShadow({ mode: 'open' }); }
+  connectedCallback() { this._r(); } attributeChangedCallback() { this._r(); }
+  _r() { const n = String(this.getAttribute('icon') || '').replace('mdi:', '');
+    this.shadowRoot.innerHTML = '<link rel="stylesheet" href="' + MDI + '"><style>:host{display:inline-flex;align-items:center;justify-content:center;width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px)}i{font-size:var(--mdc-icon-size,24px);line-height:1}</style><i class="mdi mdi-' + n + '"></i>'; }
+});
+customElements.define('hui-view', class extends HTMLElement {});
+// a masonry view with a few cards, like Home Assistant puts them in a shadow root
+customElements.define('hui-masonry-view', class extends HTMLElement {
+  constructor() { super(); this.attachShadow({ mode: 'open' }).innerHTML =
+    '<style>:host{display:block}.g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;max-width:900px}' +
+    '.c{min-height:120px;border-radius:24px;padding:18px;background:linear-gradient(155deg,rgba(255,255,255,.13),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.15);font-size:18px}' +
+    '.k{grid-column:1/-1}</style><div class="g"><div class="c k" id="slot"></div><div class="c">Living room</div><div class="c">Kitchen</div><div class="c">Bedroom</div></div>'; }
+});
+
+const Q = new URLSearchParams(location.search), lang = Q.get('lang') || 'en';
+const hass = { language: lang, locale: { language: lang }, themes: {}, user: { id: 'u1', name: 'tablet' }, states: {} };
+const cfg = JSON.parse(Q.get('config') || '{"status_bar":true,"zoom":0.85,"zoom_min_width":700,"return_home":true,"timeout":120,"users":["tablet"]}');
+
+const s = document.createElement('script');
+s.src = '../dist/casa-futura-kiosk.js';
+s.onload = () => {
+  const view = document.getElementById('view'), mv = document.createElement('hui-masonry-view');
+  view.appendChild(mv);
+  const card = document.createElement('casa-futura-kiosk-card');
+  card.setConfig(cfg);
+  card.hass = hass;
+  if (Q.get('edit') !== '0') card.editMode = true;
+  mv.shadowRoot.getElementById('slot').appendChild(card);
+  document.getElementById('note').textContent = Q.get('edit') !== '0' ? 'Edit mode: the kiosk card shows what it does.' : 'View mode: the kiosk card is invisible.';
+  window.__card = card;
+};
+document.head.appendChild(s);
+</script>
+</body>
+</html>
